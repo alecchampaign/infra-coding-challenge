@@ -14,7 +14,12 @@ async function somethingSlow(userID) {
 }
 
 function start() {
-  const workQueue = new Queue('work', 'redis://127.0.0.1:6379');
+  const workQueue = new Queue('work', {
+    redis: {
+      host: process.env.REDIS_HOST,
+      port: 6379
+    }
+  });
 
   workQueue.process(maxJobsPerWorker, async job => {
     somethingSlow(job.data.user_id);
