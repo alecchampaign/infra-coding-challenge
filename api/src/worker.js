@@ -17,7 +17,6 @@ function start() {
   const workQueue = new Queue('work', 'redis://127.0.0.1:6379');
 
   workQueue.process(maxJobsPerWorker, async job => {
-    console.log('User? ', job.data);
     somethingSlow(job.data.user_id);
   });
 }
