@@ -1,6 +1,18 @@
 version: '3.7'
 
 services:
+  redis:
+    image: redis
+    volumes:
+      - /etc/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      devnet:
+        aliases:
+          - redis
+    ports:
+      - 6379:6379
+    command: redis-server
+
   api:
     container_name: api
     image: node:12.5-stretch
@@ -9,8 +21,12 @@ services:
     ports:
       - 9000:9000
     volumes:
-        - /code/node_modules
-        - ./api:/code
+      - /code/node_modules
+      - ./api:/code
+    environment:
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
 
     command: bash -c "cd /code && npm install && sleep infinity"
   mongo:
@@ -18,7 +34,7 @@ services:
     image: mongo:4.0.9
     networks:
       devnet:
-        aliases: 
+        aliases:
           - mongo
     ports:
       - 27017:27017

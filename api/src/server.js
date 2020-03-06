@@ -1,8 +1,14 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const Queue = require('bull');
+const workQueue = new Queue('work', {
+  redis: {
+    host: process.env.REDIS_HOST,
+    port: 6379
+  }
+});
 
 const mongo = require('./clients/mongo');
-const { sleep, generateRandomNum } = require('./utils');
 
 const server = express();
 
@@ -14,17 +20,11 @@ server.get('/health', (_, res) => {
 
 server.post('/users', async (req, res) => {
   const user = await mongo.user.create(req.body);
-  await somethingSlow(user._id);
+  // await somethingSlow(user._id);
+  const job = await workQueue.add({ user_id: user._id });
 
   return res.status(200).json(user);
 });
-
-async function somethingSlow(userID) {
-  await mongo.user.updateOne({ _id: userID }, { $set: { processed: true } });
-
-  const sleepSeconds = generateRandomNum(5, 15);
-  return await sleep(sleepSeconds * 1000);
-}
 
 server.delete('/collections', async (req, res) => {
   await mongo.flushCollections();
